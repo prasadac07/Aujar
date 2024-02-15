@@ -7,7 +7,7 @@ from django.contrib.auth import authenticate, login, logout
 from .models import UserProfile
 from .serializers import UserProfileSerializer, LoginSerializer
 from django.middleware import csrf
-
+#asa
 class LoginView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = LoginSerializer(data=request.data)
