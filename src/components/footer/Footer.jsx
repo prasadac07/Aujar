@@ -3,22 +3,22 @@ import React from 'react'
 export default function Footer() {
   return (
     <>
-        <div className=' flex list-none justify-between bg-green-600 font-semibold p-4 px-28'>
-            <div className=' flex justify-center align-middle'>
-                <img src="logo.png" alt="" className=' h-32' />
+        <div className=' md:flex list-none justify-between bg-green-600 font-semibold p-4 px-28'>
+            <div className=' md:flex justify-center align-middle'>
+                <img src="logo.png" alt="" className=' h-32 ml-auto mr-auto' />
             </div>
-            <div className=' my-auto'>
+            <div className=' md:my-auto'>
                 <li>Home</li>
                 <li>Dashboard</li>
                 <li>Add Product</li>
                 <li>Get Product</li>
             </div>
-            <div className=' my-auto'>
+            <div className=' md:my-auto'>
                 <li>Buy</li>
                 <li>Sell</li>
                 <li>Rent</li>
             </div>
-            <div className=' my-auto'>
+            <div className=' md:my-auto'>
                 <li>Help</li>
                 <li>FAQs</li>
                 <li>Policy</li>

@@ -1,14 +1,28 @@
 import React, { useEffect, useState } from "react";
-
-export default function Book() {
+import ReactDOM from "react-dom";
+export default function Book({handleModal}) {
     const [hours,setHours]=useState(0);
     const [price,setPrice]=useState();
     useEffect(()=>{
          setPrice(hours*1200)
     },[hours])
-  return (
+
+    useEffect(() => {
+      // Disable scrolling when the modal is open
+      document.documentElement.style.overflowY = "hidden";
+    
+          // Re-enable scrolling when the modal is closed
+      return () => {
+        document.documentElement.style.overflowY = "scroll";
+        
+      };
+    }, []);
+  return ReactDOM.createPortal(
     <>
-      <div className=" w-3/4 mx-auto rounded-2xl shadow-2xl my-28 relative">
+    <div className="">
+
+   
+      <div className=" w-3/4 mx-auto rounded-2xl shadow-2xl top-[20%] left-[15%] fixed bg-slate-50 p-10  ">
         <div className=" flex">
           <img src="product.webp" alt=""  className=" rounded-l-2xl"/>
           <div className=" text-center p-4">
@@ -41,12 +55,14 @@ export default function Book() {
             <p className=" font-bold text-2xl">Price : <span className=" font-semibold">₹{price}</span> </p>
 
             
-            <button className="my-4  bg-green-600 hover:bg-green-800 text-white font-bold py-2 px-4 rounded" type="submit" >Confirm Booking</button>
+            <button className="my-4  bg-green-600 hover:bg-green-800 text-white font-bold py-2 px-4 rounded" type="submit" onClick={handleModal}>Confirm Booking</button>
             </form>
            
           </div>
         </div>
       </div>
-    </>
+      </div>
+    </>,
+    document.querySelector('.modal')
   );
 }

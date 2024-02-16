@@ -5,7 +5,7 @@ import Manufacturer from "../components/Filter/Manufacturer";
 export default function Get() {
   return (
     <>
-      <div className=" flex justify-between">
+      <div className=" flex justify-between ">
         <div className=" w-[500px] p-4">
           <p className=" font-bold text-3xl mt-10 text-green-600">Add Filters</p>
            

@@ -16,6 +16,7 @@ const handleModal=()=>{
 }
   return (
     <>
+    <div >
     <div className=' w-[350px] text-center shadow-2xl bg-slate-50 p-5 rounded-2xl m-5'data-aos="flip-right">
        <img src="product.webp" alt="" />
        <p className=' font-bold text-3xl'>Tractor</p>
@@ -24,21 +25,21 @@ const handleModal=()=>{
       <p className=' font-extrabold'>₹ 1200 /hr</p>
       <p className=' font-extrabold'>₹ 5500 /day</p>
      
-      <NavLink to='/book'>
+      
       <button
-        
+        onClick={handleModal}
         className="my-4  bg-green-600 hover:bg-green-800 text-white font-bold py-2 px-4 rounded"
       >
         Book
       </button>
 
-      </NavLink>
-  
+      
+  {modal && <Book onclick={handleModal}/>}
       
        
     </div>
    
-    
+    </div>
     </>
   )
 }
