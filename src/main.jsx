@@ -10,6 +10,7 @@ import Add from './pages/Add.jsx'
 import Get from './pages/Get.jsx'
 import Login from './pages/auth/Login.jsx'
 import SignIn from './pages/auth/SignIn.jsx'
+import Book from './pages/Book.jsx'
 
 const router=createBrowserRouter(
   createRoutesFromElements(
@@ -17,9 +18,16 @@ const router=createBrowserRouter(
       <Route path='home' element={<Home/>}></Route>
       <Route path='dashboard' element={<Dashboard/>}></Route>
       <Route path='add' element={<Add/>}></Route>
-      <Route path='get' element={<Get/>}></Route>      
+      <Route path='get' element={<Get/>}>
+     
+        </Route>      
       <Route path='login' element={<Login/>}></Route>
       <Route path='signin' element={<SignIn/>}></Route>
+      <Route path='book' element={<Book/>}>
+        
+        </Route>  
+
+
     </Route>
   )
 )

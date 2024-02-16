@@ -4,6 +4,7 @@ import Button1 from "../components/Buttons/button1";
 import Footer from "../components/footer/Footer";
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+import { NavLink } from "react-router-dom";
 export default function Home() {
 
   useEffect(()=>{
@@ -22,9 +23,13 @@ export default function Home() {
               repellendus aspernatur aut enim cumque magni excepturi iste beatae
               possimus?
             </p>
+
+            <NavLink to="/get">
             <button className=" border-solid border-7 border-green-700 bg-white py-2 px-4 font-semibold rounded-md">
               book
             </button>
+            </NavLink>
+        
           </div>
         </div>
         <div className=" my-6 flex justify-center" data-aos="zoom-in">
