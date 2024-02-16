@@ -82,7 +82,7 @@ class Product(models.Model):
     available_from = models.DateField(default=timezone.now)  # Updated default value
     available_till = models.DateField()
     ask_price = models.FloatField(default=1000)  # per hour
-    image_link = models.TextField(default="")
+    image_link = models.TextField(default="https://imgs.search.brave.com/hAms7Mcn0oyMfQqK0Z5RpLqQAAqAspgu5SSYdK8nOSk/rs:fit:500:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5nZXR0eWltYWdl/cy5jb20vaWQvMTcz/NTgwOTMzL3Bob3Rv/L3RyYWN0b3IuanBn/P3M9NjEyeDYxMiZ3/PTAmaz0yMCZjPXR6/T1J6eHgzX3MzTm1E/ZWJQbThpMGk5TmY1/VkRONUhyVUdMMkNS/NjVZNjA9")
     description = models.TextField()
     pincode = models.CharField(max_length=10, validators=[pincode_validator])
     product_type = models.CharField(max_length=200, default="")
@@ -101,6 +101,8 @@ class Booking(models.Model):
     id = models.CharField(max_length=300, primary_key=True, default="")
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     asker = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    number_of_hours = models.IntegerField(default=1)
+    status = models.CharField(max_length=20, choices=(("pending", "pending"), ("accepted", "accepted"), ("rejected", "rejected")), default="pending")
     def save(self, *args, **kwargs):
         self.id = str(generate_random_code(8))
         super().save(*args, **kwargs)

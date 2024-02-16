@@ -128,13 +128,19 @@ class BookProduct(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        prdtid = request.data["product_id"]
+        prdtid = request.data["id"]
+        num_hrs = int(request.data["hours"])
         user = request.user
+        product = Product.objects.get(id = int(prdtid))
 
-        if user.id != Product.objects.get(id = prdtid).from_user:
+        userr = UserProfile.objects.get(username = product.from_user)
+        print(user.id, userr.id)
+        if user.id != userr.id:
             payload = {
                 "product": prdtid,
-                "asker": user.id
+                "asker": user.id,
+                "status": "pending",
+                "number_of_hours": num_hrs
             }
             ser = BookingSerializer(data=payload)
             if ser.is_valid():
