@@ -10,7 +10,9 @@ from django.middleware import csrf
 from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
 from django.contrib.auth import get_user_model
+import logging
 
+logger = logging.getLogger(__name__)
 User = get_user_model()
 
 class LoginView(APIView):
@@ -18,27 +20,36 @@ class LoginView(APIView):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        phone_number = serializer.validated_data['mobile']
+        username = serializer.validated_data['username']
         password = serializer.validated_data['password']
-
+        # print(serializer.validated_data, username, password)
         # Authenticate user
-        user = authenticate(request, username=phone_number, password=password)
-        print(user)
+        user = authenticate(request, username=username, password=password)
+
+        logger.debug(f"Attempting login for user: {username}")
+
         if user:
-            # login(request, user)
+            user.save()
+
+            # expiration_time = datetime.now() + timedelta(seconds=20)
+
             token_obj, _ = Token.objects.get_or_create(user=user)
+            # token_obj.expires_at = expiration_time
             token_obj.save()
 
             response = Response({'message': 'Login successful'}, status=status.HTTP_200_OK)
+
             response['Authorization'] = "token " + str(token_obj)
+
             return response
         else:
-            return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 
 
 class LogoutView(APIView):
+
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
@@ -84,12 +95,12 @@ class InformationProduct(APIView):
                 "from_user": user.id,
                 "available_from": data["available_from"],
                 "product_type": data["product_type"],
-                "company_name": data["company_name"]
+                "company_name": data["company_name"],
+                "taluka": data["taluka"]
             }
 
 
         print(payload)
-        print(user.mobile)
         ser = ProductSerializer(data=payload)
 
         if ser.is_valid():

@@ -7,6 +7,14 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.core.validators import RegexValidator
 from django.db import models
 from django.core.exceptions import ValidationError
+import uuid
+import random
+import string
+
+def generate_random_code(length=8):
+    """Generate a random string of digits."""
+    digits = string.digits
+    return ''.join(random.choice(digits) for _ in range(length))
 
 class CustomUserManager(BaseUserManager):
     def _create_user(self, username, password, first_name, last_name, pincode, **extra_fields):
@@ -79,6 +87,8 @@ class Product(models.Model):
     pincode = models.CharField(max_length=10, validators=[pincode_validator])
     product_type = models.CharField(max_length=200, default="")
     company_name = models.CharField(max_length=200, default="")
+    taluka = models.CharField(max_length=200, default="")
+    # district =
 
 
 # @receiver(post_save, sender=Product)
@@ -88,8 +98,15 @@ class Product(models.Model):
 
 
 class Booking(models.Model):
+    id = models.CharField(max_length=300, primary_key=True, default="")
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     asker = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    def save(self, *args, **kwargs):
+        self.id = str(generate_random_code(8))
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.id
 
 
 
