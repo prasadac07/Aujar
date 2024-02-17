@@ -298,7 +298,8 @@ class BookProduct(APIView):
                     "status": stattus,
                     "number_of_hours": num_hrs,
                     "lender_sign": False,
-                    "booker_sign": False
+                    "booker_sign": False,
+                    "when_date": request.data["date"]
                 }
             ser = BookingSerializer(data=payload)
             if ser.is_valid():

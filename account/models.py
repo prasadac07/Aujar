@@ -105,6 +105,7 @@ class Booking(models.Model):
     status = models.CharField(max_length=20, choices=(("pending", "pending"), ("accepted", "accepted"), ("rejected", "rejected")), default="pending")
     booker_sign = models.BooleanField(default=False)
     lender_sign = models.BooleanField(default=False)
+    when_date = models.DateField(default="2024-02-02")
 
     def save(self, *args, **kwargs):
         if not self.id:  # Check if the object already has an ID
