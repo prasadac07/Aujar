@@ -9,4 +9,7 @@ urlpatterns = [
     path('postproduct/', InformationProduct.as_view()),
     path('bookproduct/', BookProduct.as_view()),
     path('all/', getall.as_view()),
+    path('update-status/<str:pk>/', UpdateBookingStatus.as_view()),
+    path('check-my-bookings/', CheckBooking.as_view()),
+    path('check-requests/', CheckRequests.as_view()),
 ]

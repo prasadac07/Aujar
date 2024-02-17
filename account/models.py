@@ -107,7 +107,8 @@ class Booking(models.Model):
     lender_sign = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
-        self.id = str(generate_random_code(8))
+        if not self.id:  # Check if the object already has an ID
+            self.id = str(generate_random_code(8))
         super().save(*args, **kwargs)
 
     def __str__(self):
