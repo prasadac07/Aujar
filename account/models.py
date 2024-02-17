@@ -103,6 +103,9 @@ class Booking(models.Model):
     asker = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     number_of_hours = models.IntegerField(default=1)
     status = models.CharField(max_length=20, choices=(("pending", "pending"), ("accepted", "accepted"), ("rejected", "rejected")), default="pending")
+    booker_sign = models.BooleanField(default=False)
+    lender_sign = models.BooleanField(default=False)
+
     def save(self, *args, **kwargs):
         self.id = str(generate_random_code(8))
         super().save(*args, **kwargs)
