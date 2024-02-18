@@ -137,12 +137,18 @@ class InformationProduct(APIView):
         #         print(f"{key}: {value}")
 
 
+
         # image = "https://imgs.search.brave.com/hAms7Mcn0oyMfQqK0Z5RpLqQAAqAspgu5SSYdK8nOSk/rs:fit:500:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5nZXR0eWltYWdl/cy5jb20vaWQvMTcz/NTgwOTMzL3Bob3Rv/L3RyYWN0b3IuanBn/P3M9NjEyeDYxMiZ3/PTAmaz0yMCZjPXR6/T1J6eHgzX3MzTm1E/ZWJQbThpMGk5TmY1/VkRONUhyVUdMMkNS/NjVZNjA9"
+
+        if 'image_link' not in data or data["image_link"] == "":
+            image = "n7fluvteh4df1x0vfegq"
+        else:
+            image = data["image_link"]
 
         payload = {
                 "available_till": data["available_till"],
                 "ask_price": data["ask_price"],
-            "image_link": data["image_link"],
+            "image_link": image,
             "pincode": data["pincode"],
                 "description": data["description"],
                 "from_user": user.id,
@@ -261,31 +267,16 @@ class UpdateBookingStatus(APIView):
 
         # Token is valid, continue processing the request
         user = token_obj.user
-        booking = Booking.objects.get(id=int(pk))
-        product_lender = booking.product.from_user
-
-        if user != product_lender:
-            return Response({'error': 'You are not authorized to update this booking'}, status=status.HTTP_403_FORBIDDEN)
 
         data = request.data
 
-        if 'status' in data:
-            if data["status"] == "pending":
-                return Response({"message": "No change in booking"}, status=status.HTTP_304_NOT_MODIFIED)
+        booking = Booking.objects.get(id=str(pk))
 
-            booking.status = data.get("status")
-            booking.save()
+        booking.status = data.get("status")
+        booking.save()
 
-            serializer = BookingSerializer(instance=booking)
-            return Response({"message": "Status changed", "data": serializer.data}, status=status.HTTP_200_OK)
-        else:
-            if booking.status == "rejected":
-                return Response({"message": "Booking rejected", "data": {}}, status=status.HTTP_204_NO_CONTENT)
-
-            if booking.status == "pending":
-                return Response({"message": "Booking still pending", "data": {}}, status=status.HTTP_200_OK)
-
-            return Response({"message": "Invalid request, missing 'status' field"}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = BookingSerializer(instance=booking)
+        return Response({"message": "Status changed", "data": serializer.data}, status=status.HTTP_200_OK)
 
 
 
@@ -409,10 +400,11 @@ class InformationAddride(APIView):
         user = token_obj.user
 
         # Check if the user is a driver
-        if not user.driver:
-            return Response({"message": "Only drivers are allowed to post a ride"}, status=status.HTTP_403_FORBIDDEN)
+        # if not user.driver:
+        #     return Response({"message": "Only drivers are allowed to post a ride"}, status=status.HTTP_403_FORBIDDEN)
 
         data = request.data
+        print(user.id, str(token_obj))
 
         payload = {
             "from_user": user.id,
@@ -514,6 +506,10 @@ class BookRide(APIView):
         else:
             return Response({"message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
 
+    # def get(self, request):
+    #     user = request.user
+    #
+
 
 class ShowRideBookings(APIView):
     def get(self, request):
@@ -530,8 +526,8 @@ class ShowRideBookings(APIView):
         user = token_obj.user
 
         # Check if the user is a driver
-        if user.driver:
-            return Response({"message": "Drivers are not allowed to view bookings"}, status=status.HTTP_403_FORBIDDEN)
+        # if user.driver:
+        #     return Response({"message": "Drivers are not allowed to view bookings"}, status=status.HTTP_403_FORBIDDEN)
 
         # Fetch bookings associated with the user
         booking_objs = RideBooking.objects.filter(asker=user.id)
@@ -560,8 +556,8 @@ class ShowPeopleBooking(APIView):
 
         user = token_obj.user
 
-        if not user.driver:
-            return Response({"message": "You are not a driver"}, status=status.HTTP_403_FORBIDDEN)
+        # if not user.driver:
+        #     return Response({"message": "You are not a driver"}, status=status.HTTP_403_FORBIDDEN)
 
         user_rides = Addride.objects.filter(from_user=user)
         booking = RideBooking.objects.filter(ride__in=user_rides).order_by('-id')
@@ -590,8 +586,8 @@ class UpdateRideBookingStatus(APIView):
         except RideBooking.DoesNotExist:
             return Response({'error': 'RideBooking not found'}, status=status.HTTP_404_NOT_FOUND)
 # Check if the user is a driver
-        if not user.driver:
-            return Response({'error': 'Only drivers are allowed to update the RideBooking status.'}, status=status.HTTP_403_FORBIDDEN)
+#         if not user.driver:
+#             return Response({'error': 'Only drivers are allowed to update the RideBooking status.'}, status=status.HTTP_403_FORBIDDEN)
 
         # if booking.asker != user:
         #     return Response({'error': 'You do not have permission to update this RideBooking'}, status=status.HTTP_403_FORBIDDEN)

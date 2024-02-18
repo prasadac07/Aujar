@@ -12,7 +12,7 @@ urlpatterns = [
     path('update-status/<str:pk>/', UpdateBookingStatus.as_view()),
     path('check-my-bookings/', CheckBooking.as_view()),
     path('check-requests/', CheckRequests.as_view()),
-    path('postaddride/', InformationAddride.as_view()),
+    path('postdrive/', InformationAddride.as_view()),
     path('bookride/', BookRide.as_view()),
     path('show-my-rides/', ShowRideBookings.as_view()),
     path("show-my-requests/", ShowPeopleBooking.as_view()),

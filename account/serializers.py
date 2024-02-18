@@ -33,12 +33,15 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def create(self, validated_data):
-        image = validated_data.get("image_link", "")
-        if not image:
-            validated_data["image_link"] = "https://imgs.search.brave.com/hAms7Mcn0oyMfQqK0Z5RpLqQAAqAspgu5SSYdK8nOSk/rs:fit:500:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5nZXR0eWltYWdl/cy5jb20vaWQvMTcz/NTgwOTMzL3Bob3Rv/L3RyYWN0b3IuanBn/P3M9NjEyeDYxMiZ3/PTAmaz0yMCZjPXR6/T1J6eHgzX3MzTm1E/ZWJQbThpMGk5TmY1/VkRONUhyVUdMMkNS/NjVZNjA9"
-        instance = self.Meta.model(**validated_data)
-        instance.save()
+        # Check if 'image_link' is not provided or empty
+        if 'image_link' not in validated_data or not validated_data['image_link']:
+            # Set a default image link if 'image_link' is not provided or empty
+            validated_data['image_link'] = "https://imgs.search.brave.com/hAms7Mcn0oyMfQqK0Z5RpLqQAAqAspgu5SSYdK8nOSk/rs:fit:500:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5nZXR0eWltYWdl/cy5jb20vaWQvMTcz/NTgwOTMzL3Bob3Rv/L3RyYWN0b3IuanBn/P3M9NjEyeDYxMiZ3/PTAmaz0yMCZjPXR6/T1J6eHgzX3MzTm1E/ZWJQbThpMGk5TmY1/VkRONUhyVUdMMkNS/NjVZNjA9"
+
+        # Create and save the instance using the updated validated data
+        instance = super().create(validated_data)
         return instance
+
 
 
 from rest_framework.exceptions import ValidationError
@@ -50,12 +53,13 @@ class BookingSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def create(self, validated_data):
+
         instance = super().create(validated_data)
+
+
         return instance
 
     def update(self, instance, validated_data):
-        is_accepted = instance.status == "accepted"
-        instance.save()
         return instance
 
 class AddrideSerializer(serializers.ModelSerializer):
