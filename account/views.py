@@ -253,10 +253,11 @@ class BookProduct(APIView):
 
 
 class UpdateBookingStatus(APIView):
-    def put(self, request, pk):
+    def put(self, request):
         token = request.META.get('HTTP_TOKEN')
 
         if not token:
+            print("no token")
             return Response({'error': 'Token not found in headers'}, status=status.HTTP_401_UNAUTHORIZED)
 
         # Verify the token
@@ -270,7 +271,20 @@ class UpdateBookingStatus(APIView):
 
         data = request.data
 
-        booking = Booking.objects.get(id=str(pk))
+        if "id" not in request.data:
+            print("no id")
+            return Response({"messege": "error"}, status=status.HTTP_404_NOT_FOUND)
+
+
+        booking = Booking.objects.get(id=str(request.data["id"]))
+
+        if not booking:
+            print("problem")
+            return Response({"..": ".."})
+
+        if "status" not in request.data:
+            print("no changeeee")
+            return Response({"no change": "no change"})
 
         booking.status = data.get("status")
         booking.save()
@@ -280,40 +294,6 @@ class UpdateBookingStatus(APIView):
 
 
 
-class CheckBooking(APIView):
-    def get(self, request):
-        token = request.META.get('HTTP_TOKEN')
-
-        if not token:
-            return Response({'error': 'Token not found in headers'}, status=status.HTTP_401_UNAUTHORIZED)
-
-        # Verify the token
-        try:
-            token_obj = Token.objects.get(key=token)
-        except Token.DoesNotExist:
-            raise AuthenticationFailed('Invalid token')
-
-        # Token is valid, continue processing the request
-        # For example, you can access the user associated with the token
-        user = token_obj.user
-
-        # Fetch bookings associated with the user
-        booking_objs = Booking.objects.filter(asker=user.id)
-        if not booking_objs:
-            return Response({"message": "No bookings found for this user"}, status=status.HTTP_404_NOT_FOUND)
-        # Serialize the booking objects
-        ser = BookingSerializer(booking_objs, many=True)
-        payload = ser.data
-        for p in payload:
-            prdt = Product.objects.get(id= int(p["product"]))
-            p["price"] = float(float(p["number_of_hours"])*prdt.ask_price)
-            p["equipement_type"] = str(prdt.product_type)
-        # Check if any bookings were found
-        if not booking_objs:
-            return Response({"message": "No bookings found for this user"}, status=status.HTTP_404_NOT_FOUND)
-
-        # Return the serialized data
-        return Response(ser.data, status=status.HTTP_200_OK)
 class CheckBooking(APIView):
     def get(self, request):
         token = request.META.get('HTTP_TOKEN')
