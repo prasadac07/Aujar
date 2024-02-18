@@ -7,15 +7,18 @@ import { FaPhone } from "react-icons/fa";
 import Input from "../../components/InputBox/Input";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios'
+import { useCookies } from "react-cookie";
 export default function Login() {
   const [Pass, setPass] = useState();
   const [PhNo, setPhNo] = useState();
+  // const [cookies, setCookie] = useCookies(tokenFromLocalStorage);
+
   const navigate=useNavigate();
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
       // Make an Axios POST request to your backend endpoint
-      const response = await axios.post('http://127.0.0.1:8000/api/login/', {
+      const response = await axios.post('http://192.168.137.1:8000/api/login/', {
       
         password:Pass,
         username:PhNo
@@ -24,7 +27,16 @@ export default function Login() {
       
         
       }, { withCredentials: true });
-      console.log('Response headers:', response.headers);
+     
+      console.log(response)
+      console.log(response.data.token);
+      localStorage.setItem("token",response.data.token)
+      // const tokenFromLocalStorage = localStorage.getItem("Token");
+      // alert("logged in")
+      navigate("/home")
+      localStorage.setItem("phno",PhNo);
+      console.log(localStorage.getItem('token'));
+      console.log('Response headers:', response.headers['Content-Type']);
       response.headers.forEach((value, name) => {
         if (name.toLowerCase() === 'authorization') {
           console.log('Authentication token:', value);
@@ -36,6 +48,7 @@ export default function Login() {
       navigate("/home")
     } catch (error) {
       console.error('Error submitting data:', error);
+      // alert("invalid credentials")
     }
 }
  

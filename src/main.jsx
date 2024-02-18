@@ -12,11 +12,19 @@ import Login from './pages/auth/Login.jsx'
 import SignIn from './pages/auth/SignIn.jsx'
 import Book from './pages/Book.jsx'
 
+import Booking from './pages/Booking.jsx'
+import Renting from './pages/Renting.jsx'
+
+
 const router=createBrowserRouter(
   createRoutesFromElements(
     <Route path='/'element={<Layout/>}>
       <Route path='home' element={<Home/>}></Route>
-      <Route path='dashboard' element={<Dashboard/>}></Route>
+      <Route path='dashboard' element={<Dashboard />}>
+        <Route path='booking' element={<Booking />} />
+        <Route path='renting' element={<Renting />} />
+      </Route>
+
       <Route path='add' element={<Add/>}></Route>
       <Route path='get' element={<Get/>}>
      

@@ -18,7 +18,7 @@ const handleSubmit = async (e) => {
   e.preventDefault()
   try {
     // Make an Axios POST request to your backend endpoint
-    const response = await axios.post('http://127.0.0.1:8000/api/register/', {
+    const response = await axios.post('http://192.168.137.1:8000/api/register/', {
       first_name:FName,
       last_name:LName,
       password:Pass,
