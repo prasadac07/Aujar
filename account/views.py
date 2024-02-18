@@ -5,8 +5,8 @@ from .models import UserProfile, Product, Booking
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import authenticate, login, logout
-from .models import UserProfile, Booking, Product
-from .serializers import UserProfileSerializer, LoginSerializer, ProductSerializer, BookingSerializer
+from .models import UserProfile, Booking, Product,Addride, RideBooking
+from .serializers import UserProfileSerializer, LoginSerializer, ProductSerializer, BookingSerializer,AddrideSerializer, BookRideSerializer
 from django.middleware import csrf
 from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
@@ -104,67 +104,7 @@ class RegisterUserView(generics.CreateAPIView):
             "message": "User registered successfully."
         }, status=status.HTTP_201_CREATED)
 
-# from rest_framework import generics, status
-# from rest_framework.response import Response
-# from rest_framework.views import APIView
-# from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-# from rest_framework.permissions import IsAuthenticated
-# from django.contrib.auth import authenticate, login, logout
-# from .models import UserProfile
-# from .serializers import UserProfileSerializer, LoginSerializer
-# from django.middleware import csrf
-#asa
-# class LoginView(APIView):
-#     def post(self, request, *args, **kwargs):
-#         serializer = LoginSerializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#
-#         username = serializer.validated_data['username']
-#         password = serializer.validated_data['password']
-#
-#         # Authenticate user
-#         user = authenticate(request, username=username, password=password)
-#
-#         if user:
-#             login(request, user)
-#             return Response({"message": "Login successful."}, status=status.HTTP_200_OK)
-#         else:
-#             return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
-#
-#
-# class LogoutView(APIView):
-#     authentication_classes = [SessionAuthentication, BasicAuthentication]
-#     permission_classes = [IsAuthenticated]
-#
-#     def get(self, request, *args, **kwargs):
-#         # Logout the user
-#         logout(request)
-#
-#         # Clear session data
-#         request.session.flush()
-#
-#         # Delete all cookies
-#         response = Response({"message": "Logout successful."}, status=status.HTTP_200_OK)
-#         response.delete_cookie('sessionid')
-#         response.delete_cookie('csrftoken')  # If CSRF protection is enabled
-#         # Add more cookie names if needed
-#
-#         return response
-#
-#
-# class RegisterUserView(generics.CreateAPIView):
-#     queryset = UserProfile.objects.all()
-#     serializer_class = UserProfileSerializer
-#
-#     def create(self, request, *args, **kwargs):
-#         serializer = self.get_serializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#
-#         serializer.save()
-#
-#         return Response({
-#             "message": "User registered successfully."
-#         }, status=status.HTTP_201_CREATED)
+
 
 class InformationProduct(APIView):
     # authentication_classes = [BasicAuthentication]
@@ -470,6 +410,188 @@ class CheckRequests(APIView):
 
 
 
+class InformationAddride(APIView):
+
+
+    def post(self, request):
+
+        token = request.META.get('HTTP_TOKEN')
+
+        if not token:
+            return Response({'error': 'Token not found in cookies'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Verify the token
+        try:
+            token_obj = Token.objects.get(key=token)
+        except Token.DoesNotExist:
+            raise AuthenticationFailed('Invalid token')
+        user = token_obj.user
+        # user = UserProfile.objects.get(id=4)
+        data = request.data
+        for key, value in request.META.items():
+            if key.startswith('HTTP'):
+                print(f"{key}: {value}")
+
+
+        payload = {
+                                
+                "from_user": user.id,
+                "driver_name": data["driver_name"],
+                "vehicle_name": data["vehicle_name"],
+                "location_from": data["location_from"],
+                "location_to": data["location_to"],
+                "available_on": data["available_on"],
+                "departure_time": data["departure_time"],
+                "price_ton": data["price_ton"],
+                "capacity": data["capacity"],
+                "specifications": data["specifications"]
+
+
+            }
+        ser=AddrideSerializer(data=payload)
+
+
+        if ser.is_valid():
+            ser.save()
+            return Response({"messege": "Ride Added"}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({"messege": "invalid request"}, status=status.HTTP_400_BAD_REQUEST)
+    def get(self, request):
+        token = request.META.get('HTTP_TOKEN')
+
+        if not token:
+            return Response({'error': 'Token not found in cookies'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            token_obj = Token.objects.get(key=token)
+        except Token.DoesNotExist:
+            raise AuthenticationFailed('Invalid token')
+        
+        user = token_obj.user
+        prdt = Addride.objects.exclude(from_user=user).order_by('-id')
+
+        ser = AddrideSerializer(prdt, many=True)
+        return Response(ser.data, status=status.HTTP_200_OK)
+
+
+class BookRide(APIView):
+    # authentication_classes = [SessionAuthentication, BasicAuthentication]
+    # permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        token = request.META.get('HTTP_TOKEN')
+
+        if not token:
+            return Response({'error': 'Token not found in cookies'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Verify the token
+        try:
+            token_obj = Token.objects.get(key=token)
+        except Token.DoesNotExist:
+            raise AuthenticationFailed('Invalid token')
+
+        # Token is valid, continue processing the request
+        # For example, you can access the user associated with the token
+        user = token_obj.user
+
+        # payload_keys = {'id', 'weight'}
+        # if not payload_keys.issubset(request.data.keys()):
+        #     return Response({"message": f"Invalid payload. Required keys: {payload_keys}"}, status=status.HTTP_400_BAD_REQUEST)
+
+        ride_id = int(request.data["id"])
+        weight = float(request.data["weight"])
+
+        # try:
+        #     ride_id = int(ride_id)
+        # except (ValueError, TypeError):
+        #     return Response({"message": "Invalid 'id' in the payload"}, status=status.HTTP_400_BAD_REQUEST)
+
+        ride = Addride.objects.get(id=ride_id)
+
+        if ride.capacity < weight:
+            return Response({"message": "Cannot book this ride"}, status=status.HTTP_400_BAD_REQUEST)
+
+        owner = UserProfile.objects.get(username=ride.from_user)
+
+        if owner.id == user.id:
+            return Response({"message": "You cannot book your own ride"}, status=status.HTTP_400_BAD_REQUEST)
+
+        existing_booking = RideBooking.objects.filter(ride=ride.id, asker=user.id).first()
+
+        if existing_booking:
+            return Response({"message": "You have already booked the ride"}, status=status.HTTP_400_BAD_REQUEST)
+
+        payload = {
+            "ride": ride.id,
+            "asker": user.id,
+            "weight_occu": weight,
+            "ride_complete": False
+        }
+        print(payload)
+        serializer = BookRideSerializer(data=payload)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Booking successful", "data": serializer.data}, status=status.HTTP_200_OK)
+        else:
+            return Response({"message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ShowRideBookings(APIView):
+    def get(self, request):
+        token = request.META.get('HTTP_TOKEN')
+
+        if not token:
+            return Response({'error': 'Token not found in headers'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Verify the token
+        try:
+            token_obj = Token.objects.get(key=token)
+        except Token.DoesNotExist:
+            raise AuthenticationFailed('Invalid token')
+
+        # Token is valid, continue processing the request
+        # For example, you can access the user associated with the token
+        user = token_obj.user
+
+        # Fetch bookings associated with the user
+        booking_objs = RideBooking.objects.filter(asker=user.id)
+
+        # Serialize the booking objects
+        ser = BookRideSerializer(booking_objs, many=True)
+        # Check if any bookings were found
+        if not booking_objs:
+            return Response({"message": "No bookings found for this user"}, status=status.HTTP_404_NOT_FOUND)
+        # Return the serialized data
+        return Response(ser.data, status=status.HTTP_200_OK) 
+
+class ShowPeopleBooking(APIView):
+    def get(self, request):
+        token = request.META.get('HTTP_TOKEN')
+
+        if not token:
+            return Response({'error': 'Token not found in headers'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Verify the token
+        try:
+            token_obj = Token.objects.get(key=token)
+        except Token.DoesNotExist:
+            raise AuthenticationFailed('Invalid token')
+
+        # Token is valid, continue processing the request
+        # For example, you can access the user associated with the token
+        user = token_obj.user
+
+        # Get the user's products
+        user_products = Addride.objects.filter(from_user=user)
+
+        # Use the user's products to filter the bookings
+        booking = RideBooking.objects.filter(ride__in=user_products).order_by('-id')
+
+        ser = BookingSerializer(booking, many=True)
+        return Response(ser.data, status=status.HTTP_200_OK)
+
+  
 
 
 
