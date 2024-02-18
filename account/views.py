@@ -132,20 +132,17 @@ class InformationProduct(APIView):
         # if request.META.get('HTTP_CONTENT_TYPE'):
         #     print(request.META.get('HTTP_CONTENT_TYPE'))
         # print(request.META)
-        for key, value in request.META.items():
-            if key.startswith('HTTP'):
-                print(f"{key}: {value}")
-        tokkken = request.META.get('HTTP_TOKEN')
-
-        print(tokkken)
+        # for key, value in request.META.items():
+        #     if key.startswith('HTTP'):
+        #         print(f"{key}: {value}")
 
 
-        image = "https://imgs.search.brave.com/hAms7Mcn0oyMfQqK0Z5RpLqQAAqAspgu5SSYdK8nOSk/rs:fit:500:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5nZXR0eWltYWdl/cy5jb20vaWQvMTcz/NTgwOTMzL3Bob3Rv/L3RyYWN0b3IuanBn/P3M9NjEyeDYxMiZ3/PTAmaz0yMCZjPXR6/T1J6eHgzX3MzTm1E/ZWJQbThpMGk5TmY1/VkRONUhyVUdMMkNS/NjVZNjA9"
+        # image = "https://imgs.search.brave.com/hAms7Mcn0oyMfQqK0Z5RpLqQAAqAspgu5SSYdK8nOSk/rs:fit:500:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5nZXR0eWltYWdl/cy5jb20vaWQvMTcz/NTgwOTMzL3Bob3Rv/L3RyYWN0b3IuanBn/P3M9NjEyeDYxMiZ3/PTAmaz0yMCZjPXR6/T1J6eHgzX3MzTm1E/ZWJQbThpMGk5TmY1/VkRONUhyVUdMMkNS/NjVZNjA9"
 
         payload = {
                 "available_till": data["available_till"],
                 "ask_price": data["ask_price"],
-            "image_link": image,
+            "image_link": data["image_link"],
             "pincode": data["pincode"],
                 "description": data["description"],
                 "from_user": user.id,
@@ -237,8 +234,6 @@ class BookProduct(APIView):
                     "asker": user.id,
                     "status": stattus,
                     "number_of_hours": num_hrs,
-                    "lender_sign": False,
-                    "booker_sign": False,
                     "when_date": request.data["date"]
                 }
             ser = BookingSerializer(data=payload)
@@ -253,12 +248,53 @@ class BookProduct(APIView):
 
 class UpdateBookingStatus(APIView):
     def put(self, request, pk):
-
-
         token = request.META.get('HTTP_TOKEN')
 
         if not token:
-            return Response({'error': 'Token not found in cookies'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'error': 'Token not found in headers'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Verify the token
+        try:
+            token_obj = Token.objects.get(key=token)
+        except Token.DoesNotExist:
+            raise AuthenticationFailed('Invalid token')
+
+        # Token is valid, continue processing the request
+        user = token_obj.user
+        booking = Booking.objects.get(id=int(pk))
+        product_lender = booking.product.from_user
+
+        if user != product_lender:
+            return Response({'error': 'You are not authorized to update this booking'}, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data
+
+        if 'status' in data:
+            if data["status"] == "pending":
+                return Response({"message": "No change in booking"}, status=status.HTTP_304_NOT_MODIFIED)
+
+            booking.status = data.get("status")
+            booking.save()
+
+            serializer = BookingSerializer(instance=booking)
+            return Response({"message": "Status changed", "data": serializer.data}, status=status.HTTP_200_OK)
+        else:
+            if booking.status == "rejected":
+                return Response({"message": "Booking rejected", "data": {}}, status=status.HTTP_204_NO_CONTENT)
+
+            if booking.status == "pending":
+                return Response({"message": "Booking still pending", "data": {}}, status=status.HTTP_200_OK)
+
+            return Response({"message": "Invalid request, missing 'status' field"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class CheckBooking(APIView):
+    def get(self, request):
+        token = request.META.get('HTTP_TOKEN')
+
+        if not token:
+            return Response({'error': 'Token not found in headers'}, status=status.HTTP_401_UNAUTHORIZED)
 
         # Verify the token
         try:
@@ -270,75 +306,23 @@ class UpdateBookingStatus(APIView):
         # For example, you can access the user associated with the token
         user = token_obj.user
 
-        # token = request.COOKIES.get('token')
+        # Fetch bookings associated with the user
+        booking_objs = Booking.objects.filter(asker=user.id)
+        if not booking_objs:
+            return Response({"message": "No bookings found for this user"}, status=status.HTTP_404_NOT_FOUND)
+        # Serialize the booking objects
+        ser = BookingSerializer(booking_objs, many=True)
+        payload = ser.data
+        for p in payload:
+            prdt = Product.objects.get(id= int(p["product"]))
+            p["price"] = float(float(p["number_of_hours"])*prdt.ask_price)
+            p["equipement_type"] = str(prdt.product_type)
+        # Check if any bookings were found
+        if not booking_objs:
+            return Response({"message": "No bookings found for this user"}, status=status.HTTP_404_NOT_FOUND)
 
-        # if not token:
-        #     return Response({'error': 'Token not found in cookies'}, status=status.HTTP_401_UNAUTHORIZED)
-        #
-        # # Verify the token
-        # try:
-        #     token_obj = Token.objects.get(key=token)
-        # except Token.DoesNotExist:
-        #     raise AuthenticationFailed('Invalid token')
-        #
-        # # Token is valid, continue processing the request
-        # # For example, you can access the user associated with the token
-        # user = token_obj.user
-        booking = Booking.objects.get(id=int(pk))
-        product_lender = booking.product.from_user
-        product_lender = UserProfile.objects.get(username=product_lender)
-
-        data = request.data
-        product_user = UserProfile.objects.get(username = booking.asker)
-
-        print(product_user.id, product_lender.id)
-
-        if booking.status == "accepted" and booking.lender_sign and booking.booker_sign:
-            ser = BookingSerializer(instance=booking)
-            return Response({"messege": "this request has been completed", "data": ser.data},  status=status.HTTP_200_OK)
-
-        if 'status' in request.data:
-            if request.data["status"] == "pending":
-                return Response({"messege": "no change in booking"}, status=status.HTTP_304_NOT_MODIFIED)
-            if user == product_lender:
-                booking.status= request.data.get("status")
-                booking.save()
-                ser = BookingSerializer(instance=booking)
-                # ser.is_valid(raise_exception=True)
-                return Response({"messege": "changes status", "data":ser.data},  status=status.HTTP_200_OK)
-            else:
-                ser = BookingSerializer(instance=booking)
-                return Response({"messege": "cannot make this change", "data":ser.data}, status=status.HTTP_203_NON_AUTHORITATIVE_INFORMATION)
-        else:
-            data = request.data
-
-            if booking.status == "rejected":
-                ser = BookingSerializer(instance=booking)
-                return Response({"messege": "booking rejected", "data": ser.data }, status=status.HTTP_204_NO_CONTENT)
-
-            if booking.status == "pending":
-                ser = BookingSerializer(instance=booking)
-                return Response({"messege": "booking still pending", "data": ser.data},  status=status.HTTP_200_OK)
-
-            if user == product_lender:
-                if "lender_sign" in data:
-                    booking.lender_sign = data["lender_sign"]
-                    booking.save()
-
-            elif user == product_user:
-                if "booker_sign" in data:
-                    booking.booker_sign = data["booker_sign"]
-                    booking.save()
-            # if (user != product_user and ("lender_sign" in data)) or (user != product_lender and ("booker_sign" in data)):
-            #     ser = BookingSerializer(instance=booking)
-            #     return Response({"messege": "you are not autherized", "data": ser.data}, status=status.HTTP_203_NON_AUTHORITATIVE_INFORMATION)
-
-            ser = BookingSerializer(instance=booking)
-            # ser.is_valid(raise_exception=True)
-            return Response(ser.data, status=status.HTTP_200_OK)
-
-
-
+        # Return the serialized data
+        return Response(ser.data, status=status.HTTP_200_OK)
 class CheckBooking(APIView):
     def get(self, request):
         token = request.META.get('HTTP_TOKEN')
@@ -411,57 +395,51 @@ class CheckRequests(APIView):
 
 
 class InformationAddride(APIView):
-
-
     def post(self, request):
-
         token = request.META.get('HTTP_TOKEN')
 
         if not token:
             return Response({'error': 'Token not found in cookies'}, status=status.HTTP_401_UNAUTHORIZED)
 
-        # Verify the token
         try:
             token_obj = Token.objects.get(key=token)
         except Token.DoesNotExist:
             raise AuthenticationFailed('Invalid token')
-        user = token_obj.user
-        # user = UserProfile.objects.get(id=4)
-        data = request.data
-        for key, value in request.META.items():
-            if key.startswith('HTTP'):
-                print(f"{key}: {value}")
 
+        user = token_obj.user
+
+        # Check if the user is a driver
+        if not user.driver:
+            return Response({"message": "Only drivers are allowed to post a ride"}, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data
 
         payload = {
-                                
-                "from_user": user.id,
-                "driver_name": data["driver_name"],
-                "vehicle_name": data["vehicle_name"],
-                "location_from": data["location_from"],
-                "location_to": data["location_to"],
-                "available_on": data["available_on"],
-                "departure_time": data["departure_time"],
-                "price_ton": data["price_ton"],
-                "capacity": data["capacity"],
-                "specifications": data["specifications"]
+            "from_user": user.id,
+            "driver_name": data["driver_name"],
+            "vehicle_name": data["vehicle_name"],
+            "location_from": data["location_from"],
+            "location_to": data["location_to"],
+            "available_on": data["available_on"],
+            "departure_time": data["departure_time"],
+            "price_ton": data["price_ton"],
+            "capacity": data["capacity"],
+            "specifications": data["specifications"]
+        }
 
-
-            }
-        ser=AddrideSerializer(data=payload)
-
+        ser = AddrideSerializer(data=payload)
 
         if ser.is_valid():
             ser.save()
-            return Response({"messege": "Ride Added"}, status=status.HTTP_201_CREATED)
+            return Response({"message": "Ride Added"}, status=status.HTTP_201_CREATED)
         else:
-            return Response({"messege": "invalid request"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "Invalid request"}, status=status.HTTP_400_BAD_REQUEST)
+
     def get(self, request):
         token = request.META.get('HTTP_TOKEN')
 
         if not token:
             return Response({'error': 'Token not found in cookies'}, status=status.HTTP_401_UNAUTHORIZED)
-
         try:
             token_obj = Token.objects.get(key=token)
         except Token.DoesNotExist:
@@ -526,7 +504,7 @@ class BookRide(APIView):
             "ride": ride.id,
             "asker": user.id,
             "weight_occu": weight,
-            "ride_complete": False
+            "ride_confirm": False
         }
         print(payload)
         serializer = BookRideSerializer(data=payload)
@@ -544,24 +522,27 @@ class ShowRideBookings(APIView):
         if not token:
             return Response({'error': 'Token not found in headers'}, status=status.HTTP_401_UNAUTHORIZED)
 
-        # Verify the token
         try:
             token_obj = Token.objects.get(key=token)
         except Token.DoesNotExist:
             raise AuthenticationFailed('Invalid token')
 
-        # Token is valid, continue processing the request
-        # For example, you can access the user associated with the token
         user = token_obj.user
+
+        # Check if the user is a driver
+        if user.driver:
+            return Response({"message": "Drivers are not allowed to view bookings"}, status=status.HTTP_403_FORBIDDEN)
 
         # Fetch bookings associated with the user
         booking_objs = RideBooking.objects.filter(asker=user.id)
 
         # Serialize the booking objects
         ser = BookRideSerializer(booking_objs, many=True)
+
         # Check if any bookings were found
         if not booking_objs:
             return Response({"message": "No bookings found for this user"}, status=status.HTTP_404_NOT_FOUND)
+
         # Return the serialized data
         return Response(ser.data, status=status.HTTP_200_OK) 
 
@@ -572,25 +553,63 @@ class ShowPeopleBooking(APIView):
         if not token:
             return Response({'error': 'Token not found in headers'}, status=status.HTTP_401_UNAUTHORIZED)
 
+        try:
+            token_obj = Token.objects.get(key=token)
+        except Token.DoesNotExist:
+            raise AuthenticationFailed('Invalid token')
+
+        user = token_obj.user
+
+        if not user.driver:
+            return Response({"message": "You are not a driver"}, status=status.HTTP_403_FORBIDDEN)
+
+        user_rides = Addride.objects.filter(from_user=user)
+        booking = RideBooking.objects.filter(ride__in=user_rides).order_by('-id')
+
+        ser = BookRideSerializer(booking, many=True)
+        return Response(ser.data, status=status.HTTP_200_OK)
+
+
+class UpdateRideBookingStatus(APIView):
+    def put(self, request, pk):
+        token = request.META.get('HTTP_TOKEN')
+
+        if not token:
+            return Response({'error': 'Token not found in cookies'}, status=status.HTTP_401_UNAUTHORIZED)
+
         # Verify the token
         try:
             token_obj = Token.objects.get(key=token)
         except Token.DoesNotExist:
             raise AuthenticationFailed('Invalid token')
 
-        # Token is valid, continue processing the request
-        # For example, you can access the user associated with the token
         user = token_obj.user
 
-        # Get the user's products
-        user_products = Addride.objects.filter(from_user=user)
+        try:
+            booking = RideBooking.objects.get(id=pk)
+        except RideBooking.DoesNotExist:
+            return Response({'error': 'RideBooking not found'}, status=status.HTTP_404_NOT_FOUND)
+# Check if the user is a driver
+        if not user.driver:
+            return Response({'error': 'Only drivers are allowed to update the RideBooking status.'}, status=status.HTTP_403_FORBIDDEN)
 
-        # Use the user's products to filter the bookings
-        booking = RideBooking.objects.filter(ride__in=user_products).order_by('-id')
+        # if booking.asker != user:
+        #     return Response({'error': 'You do not have permission to update this RideBooking'}, status=status.HTTP_403_FORBIDDEN)
 
-        ser = BookingSerializer(booking, many=True)
-        return Response(ser.data, status=status.HTTP_200_OK)
+        data = request.data
 
+        if 'ride_confirm' in data:
+            new_status = data['ride_confirm'].lower()
+            if new_status in ['accepted', 'rejected']:
+                booking.ride_confirm = new_status
+                booking.save()
+
+                ser = BookRideSerializer(instance=booking)
+                return Response({"message": f'The request has been {new_status}', "data": ser.data}, status=status.HTTP_200_OK)
+            else:
+                return Response({"error": "Invalid value for 'ride_confirm'. It should be 'accepted' or 'rejected'."}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({"error": "The 'ride_confirm' field is required for updating the status."}, status=status.HTTP_400_BAD_REQUEST)
   
 
 

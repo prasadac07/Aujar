@@ -16,5 +16,6 @@ urlpatterns = [
     path('bookride/', BookRide.as_view()),
     path('show-my-rides/', ShowRideBookings.as_view()),
     path("show-my-requests/", ShowPeopleBooking.as_view()),
+    path('ride-update-status/<str:pk>/', UpdateRideBookingStatus.as_view()),
 
 ]

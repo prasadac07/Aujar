@@ -110,8 +110,6 @@ class Booking(models.Model):
     asker = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     number_of_hours = models.IntegerField(default=1)
     status = models.CharField(max_length=20, choices=(("pending", "pending"), ("accepted", "accepted"), ("rejected", "rejected")), default="pending")
-    booker_sign = models.BooleanField(default=False)
-    lender_sign = models.BooleanField(default=False)
     when_date = models.DateField(default="2024-02-02")
 
     def save(self, *args, **kwargs):
@@ -142,7 +140,8 @@ class RideBooking(models.Model):
     ride = models.ForeignKey(Addride, on_delete=models.CASCADE)
     asker = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     weight_occu = models.FloatField(default = 0)
-    ride_complete = models.BooleanField(default=False)
+    ride_confirm = models.CharField(max_length=20, choices=(("pending", "pending"), ("accepted", "accepted"), ("rejected", "rejected")), default="pending")
+
 
     def save(self, *args, **kwargs):
         if not self.id:  # Check if the object already has an ID

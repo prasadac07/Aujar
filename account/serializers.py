@@ -55,16 +55,7 @@ class BookingSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         is_accepted = instance.status == "accepted"
-        lender_sign = validated_data.get("lender_sign", instance.lender_sign)
-        booker_sign = validated_data.get("booker_sign", instance.booker_sign)
-
-        if not is_accepted and (lender_sign or booker_sign):
-            raise ValidationError({"message": "Cannot accept request because status is not accepted."})
-
-        instance.lender_sign = lender_sign
-        instance.booker_sign = booker_sign
         instance.save()
-
         return instance
 
 class AddrideSerializer(serializers.ModelSerializer):
